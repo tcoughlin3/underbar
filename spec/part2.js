@@ -227,6 +227,7 @@
       it('should give different results for different arguments', function() {
         expect(memoAdd(1, 2)).to.equal(3);
         expect(memoAdd(3, 4)).to.equal(7);
+        expect(memoAdd(1, 3)).to.equal(4);
       });
 
       it('should not run the memoized function twice for any given set of arguments', function() {
@@ -239,6 +240,19 @@
         memoSpy(10);
         expect(spy).to.have.been.calledOnce;
         memoSpy(10);
+        expect(spy).to.have.been.calledOnce;
+      });
+      
+      it('should not run the memoized function twice for any given set of arguments', function() {
+        // Here, we wrap a dummy function in a spy. A spy is a wrapper function (much like _.memoize
+        // or _.once) that keeps track of interesting information about the function it's spying on;
+        // e.g. whether or not the function has been called.
+        var spy = sinon.spy(function() { return 'Dummy output'; });
+        var memoSpy = _.memoize(spy);
+
+        memoSpy([1,2,3]);
+        expect(spy).to.have.been.calledOnce;
+        memoSpy([1,2,3]);
         expect(spy).to.have.been.calledOnce;
       });
     });
