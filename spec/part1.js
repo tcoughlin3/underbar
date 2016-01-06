@@ -4,9 +4,12 @@
   describe('Part I', function() {
 
     describe('identity', function() {
-      var uniqueObject = {};
+      checkForNativeMethods(function() {
+        _.identity(1);
+      });
 
       it('should return whatever value is passed into it', function() {
+        var uniqueObject = {};
         expect(_.identity(1)).to.equal(1);
         expect(_.identity('string')).to.equal('string');
         expect(_.identity(false)).to.be.false;
@@ -15,6 +18,10 @@
     });
 
     describe('first', function() {
+      checkForNativeMethods(function() {
+        _.first([1,2,3]);
+      });
+
       it('should be able to pull out the first element of an array', function() {
         expect(_.first([1,2,3])).to.equal(1);
       });
@@ -33,6 +40,10 @@
     });
 
     describe('last', function() {
+      checkForNativeMethods(function() {
+        _.last([1,2,3]);
+      });
+
       it('should pull the last element from an array', function() {
         expect(_.last([1,2,3])).to.equal(3);
       });
@@ -51,55 +62,165 @@
     });
 
     describe('each', function() {
-      it('should iterate over arrays, providing access to the element, index, and array itself', function() {
-        var animals = ['ant', 'bat', 'cat'];
-        var iterationInputs = [];
+      checkForNativeMethods(function() {
+        _.each([1,2,3,4], function(number) {});
+      });
 
-        _.each(animals, function(animal, index, list) {
-          iterationInputs.push([animal, index, list]);
+      it('should be a function', function() {
+        expect(_.each).to.be.an.instanceOf(Function);
+      });
+
+      it('should not return anything', function() {
+        var returnValue = _.each([], function(){});
+        expect(returnValue).to.not.exist;
+      });
+
+      it('should not mutate the input array', function() {
+        var input = [1,2,3,4,5];
+        var result = _.each(input, function(item) { /* noop */ });
+
+        /*
+         * Mutation of inputs should be avoided without good justification otherwise
+         * as it can often lead to hard to find bugs and confusing code!
+         * Imagine we were reading the code above, and we added the following line:
+         *
+         * var lastElement = input[input.length - 1];
+         *
+         * Without knowing that mutation occured inside of each,
+         * we would assume that `lastElement` is 5. But if inside of
+         * each, we use the array method `pop`, we would permanently
+         * change `input` and our assumption would not longer be true,
+         * `lastElement` would be 4 instead!
+         *
+         * The tricky part is that we have no way of knowing about the mutation
+         * just by looking at the code above. We'd have to dive into the
+         * implementation of each to the exact line that uses `pop`.
+         * If we write a lot of code with this assumption, it might be very hard
+         * to trace back to the correct line in each.
+         *
+         * You can avoid an entire class of bugs by writing functions
+         * that don't mutate their inputs!
+         */
+
+        expect(input).to.eql([1,2,3,4,5])
+      });
+
+      it(' should iterate over arrays and provide access to each value', function() {
+        var letters = ['a', 'b', 'c'];
+        var iterations = [];
+
+        _.each(letters, function(letter) {
+          iterations.push(letter);
         });
 
-        expect(iterationInputs).to.eql([
-          ['ant', 0, animals],
-          ['bat', 1, animals],
-          ['cat', 2, animals]
+        expect(iterations).to.eql(['a','b','c']);
+      });
+
+      it('should iterate over arrays and provide access to each index', function() {
+        var letters = ['a', 'b', 'c'];
+        var iterations = [];
+
+        _.each(letters, function(letter, index) {
+          iterations.push([letter, index]);
+        });
+
+        expect(iterations).to.eql([
+          ['a', 0],
+          ['b', 1],
+          ['c', 2]
         ]);
       });
 
-      it('should only iterate over the array elements, not properties of the array', function() {
-        var animals = ['ant', 'bat', 'cat'];
-        var iterationInputs = [];
+      it('should iterate over arrays and provide access to the original collection', function() {
+        var letters = ['a', 'b', 'c'];
+        var iterations = [];
 
-        animals.shouldBeIgnored = 'Ignore me!';
-
-        _.each(animals, function(animal, index, list) {
-          iterationInputs.push([animal, index, list]);
+        _.each(letters, function(letter, index, collection) {
+          iterations.push([letter, index, collection]);
         });
 
-        expect(iterationInputs).to.eql([
-          ['ant', 0, animals],
-          ['bat', 1, animals],
-          ['cat', 2, animals]
+        expect(iterations).to.eql([
+          ['a', 0, letters],
+          ['b', 1, letters],
+          ['c', 2, letters]
         ]);
       });
 
-      it('should iterate over objects, providing access to the element, index, and object itself', function() {
-        var animals = { a: 'ant', b: 'bat', c: 'cat' };
-        var iterationInputs = [];
+      it('should only iterate over numeric keys of an array, not all properties', function() {
+        var iterations = [];
+        var letters = ['a', 'b', 'c'];
+        letters.someProperty = 'Do not iterate over me!';
 
-        _.each(animals, function(animal, key, object) {
-          iterationInputs.push([animal, key, object]);
+        _.each(letters, function(letter, index, collection) {
+          iterations.push(letter);
         });
 
-        expect(iterationInputs).to.eql([
-          ['ant', 'a', animals],
-          ['bat', 'b', animals],
-          ['cat', 'c', animals]
+        expect(iterations).to.not.include('Do not iterate over me!');
+      });
+
+      it('should iterate over objects and provide access to each value', function() {
+        var letters = {d: 'dog', e: 'elephant', f: 'flotsam'};
+        var iterations = [];
+
+        _.each(letters, function(value) {
+          iterations.push(value);
+        });
+
+        expect(iterations).to.eql(['dog', 'elephant', 'flotsam']);
+      });
+
+      it('should iterate over objects and provide access to each key', function() {
+        var letters = {d: 'dog', e: 'elephant', f: 'flotsam'};
+        var iterations = [];
+
+        _.each(letters, function(value, property) {
+          iterations.push([value, property]);
+        });
+
+        expect(iterations).to.eql([
+          ['dog', 'd'],
+          ['elephant', 'e'],
+          ['flotsam', 'f']
         ]);
       });
+
+      it('should iterate over objects and provide access to the original object', function() {
+        var letters = {d: 'dog', e: 'elephant', f: 'flotsam'};
+        var iterations = [];
+
+        _.each(letters, function(value, property, object) {
+          iterations.push([value, property, object]);
+        });
+
+        expect(iterations).to.eql([
+          ['dog', 'd', letters],
+          ['elephant', 'e', letters],
+          ['flotsam', 'f', letters]
+        ]);
+      });
+
+      it('should not confuse an object with a `length` property for an array', function() {
+        var dresser = { length: 39, width: 79, height: 127};
+        var iterations = [];
+
+        _.each(dresser, function(value, property, object) {
+          iterations.push([value, property, object]);
+        });
+
+        expect(iterations).to.eql([
+          [39, 'length', dresser],
+          [79, 'width', dresser],
+          [127, 'height', dresser]
+        ]);
+      });
+
     });
 
     describe('indexOf', function() {
+      checkForNativeMethods(function() {
+        _.indexOf([10, 20, 30, 40], 40)
+      });
+
       it('should find 40 in the list', function() {
         var numbers = [10, 20, 30, 40, 50];
 
@@ -126,6 +247,11 @@
     });
 
     describe('filter', function() {
+      checkForNativeMethods(function() {
+        var isEven = function(num) { return num % 2 === 0; };
+        _.filter([1, 2, 3, 4], isEven)
+      });
+
       it('should return all even numbers in an array', function() {
         var isEven = function(num) { return num % 2 === 0; };
         var evens = _.filter([1, 2, 3, 4, 5, 6], isEven);
@@ -150,6 +276,11 @@
     });
 
     describe('reject', function() {
+      checkForNativeMethods(function() {
+        var isEven = function(num) { return num % 2 === 0; };
+        _.reject([1, 2, 3, 4, 5, 6], isEven)
+      });
+
       it('should reject all even numbers', function() {
         var isEven = function(num) { return num % 2 === 0; };
         var odds = _.reject([1, 2, 3, 4, 5, 6], isEven);
@@ -174,6 +305,40 @@
     });
 
     describe('uniq', function() {
+      checkForNativeMethods(function() {
+        _.uniq([1, 2, 3, 4])
+      });
+
+      it('should not mutate the input array', function() {
+        var input = [1,2,3,4,5];
+        var result = _.uniq(input);
+
+        /*
+         * Mutation of inputs should be avoided without good justification otherwise
+         * as it can often lead to hard to find bugs and confusing code!
+         * Imagine we were reading the code above, and we added the following line:
+         *
+         * var lastElement = input[input.length - 1];
+         *
+         * Without knowing that mutation occured inside of _.uniq,
+         * we would assume that `lastElement` is 5. But if inside of
+         * _.uniq, we use the array method `pop`, we would permanently
+         * change `input` and our assumption would not longer be true,
+         * `lastElement` would be 4 instead!
+         *
+         * The tricky part is that we have no way of knowing about the mutation
+         * just by looking at the code above. We'd have to dive into the
+         * implementation of _.uniq to the exact line that uses `pop`.
+         * If we write a lot of code with this assumption, it might be very hard
+         * to trace back to the correct line in _.uniq.
+         *
+         * You can avoid an entire class of bugs by writing functions
+         * that don't mutate their inputs!
+         */
+
+        expect(input).to.eql([1,2,3,4,5])
+      });
+
       it('should return all unique values contained in an unsorted array', function() {
         var numbers = [1, 2, 1, 3, 1, 4];
 
@@ -196,6 +361,42 @@
     });
 
     describe('map', function() {
+      checkForNativeMethods(function() {
+        _.map([1, 2, 3, 4], function(num) {
+          return num * 2;
+        })
+      });
+
+      it('should not mutate the input array', function() {
+        var input = [1,2,3,4,5];
+        var result = _.map(input, function(num) { /* noop */ });
+
+        /*
+         * Mutation of inputs should be avoided without good justification otherwise
+         * as it can often lead to hard to find bugs and confusing code!
+         * Imagine we were reading the code above, and we added the following line:
+         *
+         * var lastElement = input[input.length - 1];
+         *
+         * Without knowing that mutation occured inside of map,
+         * we would assume that `lastElement` is 5. But if inside of
+         * map, we use the array method `pop`, we would permanently
+         * change `input` and our assumption would not longer be true,
+         * `lastElement` would be 4 instead!
+         *
+         * The tricky part is that we have no way of knowing about the mutation
+         * just by looking at the code above. We'd have to dive into the
+         * implementation of map to the exact line that uses `pop`.
+         * If we write a lot of code with this assumption, it might be very hard
+         * to trace back to the correct line in map.
+         *
+         * You can avoid an entire class of bugs by writing functions
+         * that don't mutate their inputs!
+         */
+
+        expect(input).to.eql([1,2,3,4,5])
+      });
+
       it('should apply a function to every value in an array', function() {
         var doubledNumbers = _.map([1, 2, 3], function(num) {
           return num * 2;
@@ -215,6 +416,15 @@
     });
 
     describe('pluck', function() {
+      checkForNativeMethods(function() {
+        var people = [
+          { name: 'moe', age: 30 },
+          { name: 'curly', age: 50 }
+        ];
+
+        _.pluck(people, 'name');
+      });
+
       it('should return values contained at a user-defined property', function() {
         var people = [
           { name: 'moe', age: 30 },
@@ -237,35 +447,164 @@
     });
 
     describe('reduce', function() {
-      it('should be able to sum up an array', function() {
+      checkForNativeMethods(function() {
         var add = function(tally, item) {return tally + item; };
-        var total = _.reduce([1, 2, 3], add, 0);
-
-        expect(total).to.equal(6);
+        _.reduce([1, 2, 3, 4], add)
       });
 
-      it('should use the first element as an accumulator when none is given', function() {
-        var add = function(tally, item) {return tally + item; };
-        var total = _.reduce([1, 2, 3], add);
+      // it('should be able to sum up an array', function() {
+      //   var add = function(tally, item) {return tally + item; };
+      //   var total = _.reduce([1, 2, 3], add, 0);
 
-        expect(total).to.equal(6);
+      //   expect(total).to.equal(6);
+      // });
+
+      // it('should use the first element as an accumulator when none is given', function() {
+      //   var add = function(tally, item) {return tally + item; };
+      //   var total = _.reduce([1, 2, 3], add);
+
+      //   expect(total).to.equal(6);
+      // });
+
+      // it('should invoke the iterator on the first element when given an accumulator', function() {
+      //   var sumSquares = function(tally, item) {return tally + item * item; };
+      //   var total = _.reduce([2, 3], sumSquares, 0);
+
+      //   expect(total).to.equal(13);
+      // });
+
+      // it('should not invoke the iterator on the first element when using it as an accumulator', function() {
+      //   var sumSquares = function(tally, item) {return tally + item * item; };
+      //   var total = _.reduce([2, 3], sumSquares);
+
+      //   expect(total).to.equal(11);
+      // });
+
+      it('should be a function', function() {
+        expect(_.reduce).to.be.an.instanceOf(Function);
       });
 
-      it('should invoke the iterator on the first element when given an accumulator', function() {
-        var sumSquares = function(tally, item) {return tally + item * item; };
-        var total = _.reduce([2, 3], sumSquares, 0);
-
-        expect(total).to.equal(13);
+      it('should return a value', function() {
+        var result = _.reduce([3,2,1], function(memo, item) {return item;});
+        expect(result).to.be.defined;
       });
 
-      it('should not invoke the iterator on the first element when using it as an accumulator', function() {
-        var sumSquares = function(tally, item) {return tally + item * item; };
-        var total = _.reduce([2, 3], sumSquares);
+      it('should not mutate the input array', function() {
+        var input = [1,2,3,4,5];
+        var result = _.reduce(input, function(memo, item) {return item;});
+        
+        /*
+         * Mutation of inputs should be avoided without good justification otherwise
+         * as it can often lead to hard to find bugs and confusing code!
+         * Imagine we were reading the code above, and we added the following line:
+         *
+         * var lastElement = input[input.length - 1];
+         *
+         * Without knowing that mutation occured inside of _.reduce,
+         * we would assume that `lastElement` is 5. But if inside of
+         * _.reduce, we use the array method `pop`, we would permanently
+         * change `input` and our assumption would not longer be true,
+         * `lastElement` would be 4 instead!
+         *
+         * The tricky part is that we have no way of knowing about the mutation
+         * just by looking at the code above. We'd have to dive into the
+         * implementation of _.reduce to the exact line that uses `pop`.
+         * If we write a lot of code with this assumption, it might be very hard
+         * to trace back to the correct line in _.reduce.
+         *
+         * You can avoid an entire class of bugs by writing functions
+         * that don't mutate their inputs!
+         */
 
-        expect(total).to.equal(11);
+        expect(input).to.eql([1,2,3,4,5])
+      });
+
+      it('should invoke the iterator function with arguments (memo, item) in that order', function() {
+        var memoInCallback, itemInCallback;
+
+        _.reduce(['item'], function(memo, item) {
+          memoInCallback = memo;
+          itemInCallback = item;
+        }, 'memo');
+
+        expect(memoInCallback).to.equal('memo');
+        expect(itemInCallback).to.equal('item');
+      });
+
+      it('should pass items of the array into the iterator from left to right', function() {
+        var orderTraversed = [];
+
+        _.reduce([1,2,3,4], function(memo, item) {
+          orderTraversed.push(item);
+          return memo;
+        }, 10);
+
+        expect(orderTraversed).to.eql([1,2,3,4]);
+      });
+
+      it('should continue to call iterator even if the iterator returns undefined', function() {
+        var callCount = 0;
+        var returnFalsy = function(total, item) {
+          callCount++;
+          if (callCount === 1) {
+            return undefined;
+          } else {
+            return item + 1;
+          }
+        };
+
+        var total = _.reduce([1,1,2], returnFalsy);
+        expect(total).to.equal(3);
+      });
+
+      it('should pass every item of the array into the iterator if a memo is passed in', function() {
+        var result = _.reduce([1,2,3], function(memo, item) {
+          return memo - item;
+        }, 10);
+
+        expect(result).to.equal(4);
+      });
+
+      it('should accept falsy values as a valid memo', function() {
+        // Be careful how you check if a memo has been passed in
+        var result = _.reduce([1,2,3], function(memo, item) {
+          return memo * item;
+        }, 0);
+
+        expect(result).to.equal(0);
+      });
+
+      it('should set memo to be the first item of the array if no memo is passed in', function() {
+        var result = _.reduce([1,2,3], function(memo) {
+          return memo;
+        });
+
+        expect(result).to.equal(1);
+      });
+
+
+      it('should pass the second item of the array into the iterator first if a memo is not passed in', function() {
+        var result = _.reduce([3,2,1], function(memo, item) {
+          return memo - item;
+        });
+
+        expect(result).to.equal(0);
       });
 
     });
   });
 
+  function checkForNativeMethods(runUnderbarFunction) {
+    it('should not use the native version of any underbar methods in its implementation', function() {
+      // These spies are set up in testSupport.js
+      runUnderbarFunction();
+      expect(Array.prototype.map.called).to.equal(false);
+      expect(Array.prototype.indexOf.called).to.equal(false);
+      expect(Array.prototype.forEach.called).to.equal(false);
+      expect(Array.prototype.filter.called).to.equal(false);
+      expect(Array.prototype.reduce.called).to.equal(false);
+      expect(Array.prototype.every.called).to.equal(false);
+      expect(Array.prototype.some.called).to.equal(false);
+    });
+  }
 }());
