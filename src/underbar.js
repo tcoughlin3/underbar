@@ -112,7 +112,7 @@
   // to reduce. If no starting value is passed, the first element is used as
   // the accumulator, and is never passed to the iterator. In other words, in
   // the case where a starting value is not passed, the iterator is not invoked
-  // until the second element, with the first element as its second argument.
+  // until the second element, with the first element as its first argument.
   //  
   // Example:
   //   var numbers = [1,2,3];
