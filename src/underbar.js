@@ -218,6 +218,8 @@
   // _.memoize should return a function that, when called, will check if it has
   // already computed the result for the given argument and return that value
   // instead if possible.
+  //
+  // TIP: JSON.stringify will be useful
   _.memoize = function(func) {
   };
 
