@@ -92,7 +92,7 @@
    * as an example of this.
    */
 
-  // Takes an array of objects and returns and array of the values of
+  // Takes an array of objects and returns an array of the values of
   // a certain property in it. E.g. take an array of people and return
   // an array of just their ages
   _.pluck = function(collection, key) {
@@ -112,7 +112,7 @@
   // to reduce. If no starting value is passed, the first element is used as
   // the accumulator, and is never passed to the iterator. In other words, in
   // the case where a starting value is not passed, the iterator is not invoked
-  // until the second element, with the first element as its second argument.
+  // until the second element, with the first element as its first argument.
   //  
   // Example:
   //   var numbers = [1,2,3];
@@ -218,6 +218,8 @@
   // _.memoize should return a function that, when called, will check if it has
   // already computed the result for the given argument and return that value
   // instead if possible.
+  //
+  // TIP: JSON.stringify will be useful
   _.memoize = function(func) {
   };
 
