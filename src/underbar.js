@@ -98,7 +98,7 @@
   // Reduces an array or object to a single value by repetitively calling
   // iterator(accumulator, item) for each item. Accumulator should be
   // the return value of the previous iterator call.
-  _.reduce = (collection, iterator, accumulator) => {
+  _.reduce = (collection, callback, accumulator) => {
     let initializing = accumulator === undefined ? true : false;
 
     _.each(collection, (value, index, collection) => {
@@ -106,7 +106,7 @@
         accumulator = value;
         initializing = false;
       } else {
-        accumulator = iterator(accumulator, value);
+        accumulator = callback(accumulator, value);
       }
     });
 
@@ -114,7 +114,7 @@
   };
 
 
-  // Determine if the array or object contains a given value (using `===`).
+  // Determine if the array or object contains a given value.
   _.contains = (collection, target) => {
     return _.reduce(collection, (wasFound, item) => {
       if (wasFound) {
@@ -126,8 +126,7 @@
 
 
   // Determine whether all of the elements match a truth test.
-  _.every = (collection, iterator) => {
-    iterator = iterator || _.identity;
+  _.every = (collection, iterator = _.identity) => {
     return _.reduce(collection, (allPassed, item) => {
       if (!allPassed) {
         return false;
@@ -136,8 +135,7 @@
     }, true);
   };
 
-  // Determine whether any of the elements pass a truth test. If no iterator is
-  // provided, provide a default one
+  // Determine whether any of the elements pass a truth test.
   _.some = (collection, iterator = _.identity) => !_.every(collection, item => !iterator(item));
 
 
@@ -147,28 +145,26 @@
    */
 
   // Extend a given object with all the properties of the passed in object(s).
-  _.extend = function(obj) {
-    const allPassed = Array.prototype.slice.call(arguments, 1);
-    _.each(allPassed, (passedObj, index) => {
-      _.each(passedObj, (value, key) => {
-        obj[key] = value;
+  _.extend = function(...args) {
+    return _.reduce(args, (extendee, obj) => {
+      _.each(obj, (value, key) => {
+        extendee[key] = value;
       });
+      return extendee;
     });
-    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
-  _.defaults = function(obj) {
-    const allPassed = Array.prototype.slice.call(arguments, 1);
-    _.each(allPassed, (passedObj, index) => {
-      _.each(passedObj, (value, key) => {
-        if (obj[key] === undefined) {
-          obj[key] = value;
+  _.defaults = function(...args) {
+    return _.reduce(args, (extendee, obj) => {
+      _.each(obj, (value, key) => {
+        if (extendee[key] === undefined) {
+          extendee[key] = value;
         }
       });
+      return extendee;
     });
-    return obj;
   };
 
 
@@ -184,10 +180,9 @@
 
     return function() {
       if (!alreadyCalled) {
-        result = func.apply(null, arguments);
+        result = func(...arguments);
         alreadyCalled = true;
       }
-
       return result;
     };
   };
@@ -200,7 +195,7 @@
     return function() {
       let args = JSON.stringify(arguments);
       if (memoized[args] === undefined) {
-        memoized[args] = func.apply(null, arguments);
+        memoized[args] = func(...arguments);
       }
       return memoized[args];
     };
@@ -208,11 +203,9 @@
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
-  _.delay = function(func, wait) {
-    const args = Array.prototype.slice.call(arguments, 2);
-
+  _.delay = function(func, wait, ...args) {
     setTimeout(() => {
-      func.apply(null, args)
+      func(...args)
     }, wait);
   };
 
@@ -245,14 +238,13 @@
   };
 
   // Sort the object's values by a criterion produced by an iterator.
-  _.sortBy = function(collection, iterator) {
-    if (typeof iterator === 'string') {
-      let prop = iterator;
-      return collection.sort((a, b) => a[prop] > b[prop]);
-    } else if (typeof iterator === 'function'){
-      return collection.sort((a, b) => iterator(a) > iterator(b));
+  _.sortBy = function(collection, criterion) {
+    if (typeof criterion === 'string') {
+      return collection.sort((a, b) => a[criterion] > b[criterion]);
+    } else if (typeof criterion === 'function'){
+      return collection.sort((a, b) => criterion(a) > criterion(b));
     } else {
-      return console.error('invalid iterator type passed to sortBy')
+      return collection.sort();
     }
   };
 
@@ -266,7 +258,7 @@
     const longest = _.reduce(arguments, (longest, arg) => {
       let len = arg.length;
       return len > longest ? len : longest;
-    } ,0);
+    }, 0);
 
     for (let i = 0; i < longest; i++) {
       zipped[i] = [];
@@ -278,31 +270,32 @@
     return zipped;
   };
 
+
   // Takes a multidimensional array and converts it to a one-dimensional array.
   // The new array should contain all elements of the multidimensional array.
   _.flatten = (nestedArray, result) => {
     return _.reduce(nestedArray, (acc, val) => Array.isArray(val) ? acc.concat(_.flatten(val)) : acc.concat([val]), []);
   };
 
+
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the allPassed-in arrays.
-  _.intersection = function() {
-    return _.reduce(arguments, (int, arg) => _.filter(int, val => _.contains(arg, val)));
-  };
+  _.intersection = (...args) => _.reduce(args, (int, arg) => _.filter(int, val => _.contains(arg, val)));
+
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
-  _.difference = function(array) {
-    const removals = _.flatten(Array.prototype.slice.call(arguments, 1));
+  _.difference = function(array, ...removals) {
+    removals = _.flatten(removals);
     return _.reduce(array, (diff, val) => {
       if (!_.contains(removals, val)) diff.push(val);
       return diff;
     }, []);
   };
 
+
   // Returns a function, that, when invoked, will only be triggered at most once
-  // during a given window of time.  See the Underbar readme for extra details
-  // on this function.
+  // during a given window of time.
   _.throttle = (func, wait) => {
     let callable = true;
 
@@ -314,5 +307,5 @@
       }
     }
   };
-  
+
 }());
